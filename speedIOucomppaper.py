@@ -307,17 +307,30 @@ for lag in lags:
      
 
 def sigtest(Icomp,udiff=udiff):
+     events=np.zeros(Icomp.shape[0])
+     tt=0
+     events[0]=0
+     for t in np.arange(1,Icomp.shape[0]):
+          if Icomp[t]-Icomp[t-1]>1:
+               tt=tt+1
+          events[t]=tt
+     eventinds=np.unique(events)
+     print('The number of events is '+str(eventinds.max())+'\n\n\n')
      ucomp=np.zeros((2*maxlag+1,u200std.shape[1],1000))
      composite=np.zeros((2*maxlag+1,360))
      for lag in np.arange(-maxlag,maxlag+1):
           composite[lag+maxlag,:]=np.mean(udiff[Icomp+lag,:],axis=0)
      for i in np.arange(1000):
-          Irand=np.random.choice(Icomp,Icomp.shape[0])
+          #Irand=np.random.choice(Icomp,Icomp.shape[0])
+          Irand=np.random.choice(eventinds,eventinds.shape[0])
+          base=[]
+          eventsdates=np.array([Icomp[j] for i in Irand for j in np.where(events==i)[0]])#eventdates are the date indexes of individual events
           for lag in np.arange(-maxlag,maxlag+1):
-               ucomp[lag+maxlag,:,i]=udiff[Irand+lag,:].mean(axis=0)
+               #ucomp[lag+maxlag,:,i]=udiff[Irand+lag,:].mean(axis=0)
+               ucomp[lag+maxlag,:,i]=udiff[eventsdates+lag,:].mean(axis=0)
      ucomp=np.sort(ucomp,axis=2)
-     sigtest=np.logical_or(0<ucomp[:,:,5],0>ucomp[:,:,995])
-     return sigtest
+     sigtestout=np.logical_or(0<ucomp[:,:,25],0>ucomp[:,:,975])
+     return sigtestout
 
 #Run Statistical Significance Testing for standardized difference between 850 and 200 hPa wind
 sig0=sigtest(I0)
